@@ -220,7 +220,7 @@ func run(idConfig *identity.IdentityConfig, stopChan <-chan struct{}) error {
 
 					// Create the directory before the file
 					if err := os.MkdirAll(idConfig.RoleCertDir, 0755); err != nil {
-						return err
+						return errors.Wrap(err, "unable to create directory for x509 role cert")
 					}
 
 					if err := w.AddBytes(outPath, 0644, roleCertPEM); err != nil {
