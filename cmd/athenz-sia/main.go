@@ -217,6 +217,12 @@ func run(idConfig *identity.IdentityConfig, stopChan <-chan struct{}) error {
 						rolecert.Subject, rolecert.Issuer, rolecert.NotBefore, rolecert.NotAfter, rolecert.SerialNumber, rolecert.DNSNames)
 					outPath := filepath.Join(idConfig.RoleCertDir, rolecert.Domain+"_"+rolecert.Role+".cert.pem")
 					log.Debugf("Saving x509 role cert[%d bytes] at %s", len(roleCertPEM), outPath)
+
+					// Create the directory before the file
+					if err := os.MkdirAll(idConfig.RoleCertDir, 0755); err != nil {
+						return err
+					}
+
 					if err := w.AddBytes(outPath, 0644, roleCertPEM); err != nil {
 						return errors.Wrap(err, "unable to save x509 role cert")
 					}
