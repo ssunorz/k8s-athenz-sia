@@ -63,8 +63,7 @@ func Metricsd(idConfig *IdentityConfig, stopChan <-chan struct{}) (error, <-chan
 				log.Warnf("Failed to read element '%s' of given TARGET_DOMAIN_ROLES: %s, err: %s", domainrole, idConfig.TargetDomainRoles, err.Error())
 				continue
 			}
-			// if RoleCertFilenameDelimiter = "_" then,
-			// fileName = your-domain_your-role.cert.pem"
+
 			fileName := targetDomain + idConfig.RoleCertFilenameDelimiter + targetRole + ".cert.pem"
 			exporter.Files = append(exporter.Files, strings.TrimSuffix(idConfig.RoleCertDir, "/")+"/"+fileName)
 		}
