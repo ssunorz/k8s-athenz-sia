@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -70,6 +71,11 @@ func Certificated(idConfig *IdentityConfig, stopChan <-chan struct{}) (error, <-
 		}
 
 		if roleCerts != nil {
+			// Create the directory before saving role certificates
+			if err := os.MkdirAll(idConfig.RoleCertDir, 0755); err != nil {
+				return errors.Wrap(err, "unable to create directory for x509 role cert")
+			}
+
 			for _, rolecert := range roleCerts {
 				roleCertPEM := []byte(rolecert.X509Certificate)
 				if len(roleCertPEM) != 0 {
