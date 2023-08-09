@@ -177,7 +177,7 @@ func (h *identityHandler) GetX509Cert(forceInit bool) (*InstanceIdentity, []byte
 
 	var id *zts.InstanceIdentity
 	// TODO: Here is where it generates the instance certificate
-	expiryTime := int32(5) // minutes
+	expiryTime := int32(3) // minutes
 	if h.config.Init || forceInit {
 
 		// TOOD: Registeration
