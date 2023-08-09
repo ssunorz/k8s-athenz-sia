@@ -176,13 +176,18 @@ func (h *identityHandler) GetX509Cert(forceInit bool) (*InstanceIdentity, []byte
 	}
 
 	var id *zts.InstanceIdentity
+	// TODO: Here is where it generates the instance certificate
 	if h.config.Init || forceInit {
+		expiryTime := int32(1) // minutes
+
+		// TOOD: Registeration
 		id, _, err = h.client.PostInstanceRegisterInformation(&zts.InstanceRegisterInformation{
 			Provider:        zts.ServiceName(h.config.ProviderService),
 			Domain:          zts.DomainName(h.domain),
 			Service:         zts.SimpleName(h.service),
 			AttestationData: string(saToken),
 			Csr:             string(csrPEM),
+			ExpiryTime:      &expiryTime,
 		})
 		if err != nil {
 			return nil, nil, fmt.Errorf("Failed to call PostInstanceRegisterInformation, err: %v", err)
@@ -279,6 +284,7 @@ func (h *identityHandler) GetX509RoleCert(id *InstanceIdentity, keyPEM []byte) (
 		if err != nil {
 			return nil, fmt.Errorf("Failed to prepare csr, failed to parse certificate for PostRoleCertificateRequest, Subject CommonName[%s], err: %v", csrOption.Subject.CommonName, err)
 		}
+		// TODO: Okay!?
 		roleRequest := &zts.RoleCertificateRequest{
 			Csr:        string(roleCsrPEM),
 			ExpiryTime: int64(x509LeafCert.NotAfter.Sub(time.Now()).Minutes()) + int64(config.DEFAULT_ROLE_CERT_EXPIRY_TIME_BUFFER_MINUTES), // Extract NotAfter from the instance certificate
