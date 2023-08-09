@@ -177,8 +177,8 @@ func (h *identityHandler) GetX509Cert(forceInit bool) (*InstanceIdentity, []byte
 
 	var id *zts.InstanceIdentity
 	// TODO: Here is where it generates the instance certificate
+	expiryTime := int32(5) // minutes
 	if h.config.Init || forceInit {
-		expiryTime := int32(5) // minutes
 
 		// TOOD: Registeration
 		id, _, err = h.client.PostInstanceRegisterInformation(&zts.InstanceRegisterInformation{
@@ -202,6 +202,7 @@ func (h *identityHandler) GetX509Cert(forceInit bool) (*InstanceIdentity, []byte
 			&zts.InstanceRefreshInformation{
 				AttestationData: string(saToken),
 				Csr:             string(csrPEM),
+				ExpiryTime:      &expiryTime,
 			})
 		if err != nil {
 			return nil, nil, fmt.Errorf("Failed to call PostInstanceRefreshInformation, err: %v", err)
