@@ -31,7 +31,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Certificated(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (error, <-chan struct{}) {
+func Certificated(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (error, <-chan error) {
 
 	if stopChan == nil {
 		panic(fmt.Errorf("Certificated: stopChan cannot be empty"))
@@ -328,7 +328,7 @@ func Certificated(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (er
 		return err, nil
 	}
 
-	shutdownChan := make(chan struct{}, 1)
+	shutdownChan := make(chan error, 1)
 	t := time.NewTicker(idConfig.Refresh)
 	go func() {
 		defer t.Stop()
@@ -344,6 +344,9 @@ func Certificated(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (er
 				if err != nil {
 					log.Errorf("Failed to refresh x509 certificate after multiple retries: %s", err.Error())
 				}
+			case err := <-tokenSdChan:
+				shutdownChan <- err
+				close(tokenChan)
 			case <-stopChan:
 				log.Info("Certificate provider will shutdown")
 				err = deleteRequest()

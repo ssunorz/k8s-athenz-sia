@@ -204,7 +204,7 @@ func (d *daemon) fetchTokensAndUpdateCaches() error {
 }
 
 // Tokend starts the token server and refreshes tokens periodically.
-func Tokend(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (error, <-chan struct{}) {
+func Tokend(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (error, <-chan error) {
 
 	// validate
 	if stopChan == nil {
@@ -243,7 +243,7 @@ func Tokend(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (error, <
 			return err, nil
 		}
 	}
-	serverDone := make(chan struct{}, 1)
+	serverDone := make(chan error, 1)
 	go func() {
 		log.Infof("Starting token provider[%s]", idConfig.TokenServerAddr)
 		listenAndServe := func() error {
@@ -252,14 +252,14 @@ func Tokend(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (error, <
 			}
 			return httpServer.ListenAndServe()
 		}
-		if err := listenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := listenAndServe(); err != nil {
 			log.Errorf("Failed to start token provider: %s", err.Error())
+			serverDone <- err
 		}
-		close(serverDone)
 	}()
 
 	// start token refresh daemon
-	shutdownChan := make(chan struct{}, 1)
+	shutdownChan := make(chan error, 1)
 	t := time.NewTicker(d.tokenRefresh)
 	go func() {
 		defer t.Stop()
@@ -273,6 +273,9 @@ func Tokend(idConfig *config.IdentityConfig, stopChan <-chan struct{}) (error, <
 				if err != nil {
 					log.Errorf("Failed to refresh tokens after multiple retries: %s", err.Error())
 				}
+			case err := <-serverDone:
+				shutdownChan <- err
+				close(serverDone)
 			case <-stopChan:
 				log.Info("Token provider will shutdown")
 				time.Sleep(idConfig.ShutdownDelay)

@@ -85,7 +85,15 @@ func main() {
 	}
 
 	if !idConfig.Init {
-		<-ch // wait until receiving os.Signal from channel ch
+		for {
+			select {
+			case err := <-sdChan:
+				close(certificateChan)
+				log.Fatalln(err)
+				return
+			case <-ch: // wait until receiving os.Signal from channel ch
+			}
+		}
 		log.Println("Shutting down...")
 	}
 
